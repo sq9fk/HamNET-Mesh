@@ -19,7 +19,7 @@
 #include "ar9003_phy.h"
 #include "ar9003_eeprom.h"
 #include "ar9003_mci.h"
-u8 mod_eeprompwr[ar9300RateSize];
+u8 mod_eeprompwr[ar9300RateSize]; /* patch for TX  Power */
 #define COMP_HDR_LEN 4
 #define COMP_CKSUM_LEN 2
 
@@ -4648,7 +4648,7 @@ static void ar9003_hw_get_target_power_eeprom(struct ath_hw *ah,
 		ath_dbg(common, REGULATORY, "TPC[%02d] 0x%08x\n",
 			i, targetPowerValT2[i]);
 	}
-memcpy(mod_eeprompwr,targetPowerValT2,ar9300RateSize); /* HamNET */
+memcpy(mod_eeprompwr,targetPowerValT2,ar9300RateSize); /* HamNET patch TX Power*/
 }
 
 static int ar9003_hw_cal_pier_get(struct ath_hw *ah,
@@ -5385,7 +5385,7 @@ static void ath9k_hw_ar9300_set_txpower(struct ath_hw *ah,
 
 	if (test)
 		return;
-memcpy(targetPowerValT2,mod_eeprompwr,ar9300RateSize); /* HamNET */
+memcpy(targetPowerValT2,mod_eeprompwr,ar9300RateSize); /* HamNET patch TX power */
 	for (i = 0; i < ar9300RateSize; i++) {
 		ath_dbg(common, REGULATORY, "TPC[%02d] 0x%08x\n",
 			i, targetPowerValT2[i]);
