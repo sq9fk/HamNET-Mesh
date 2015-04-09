@@ -72,6 +72,7 @@ int ieee80211_channel_to_frequency(int chan, enum ieee80211_band band)
 		return 0; /* not supported */
 	switch (band) {
 	case IEEE80211_BAND_2GHZ:
+	chan = (int)(char)chan;
 		if (chan == 14)
 			return 2484;
 		else if (chan < 14)
@@ -97,10 +98,14 @@ EXPORT_SYMBOL(ieee80211_channel_to_frequency);
 int ieee80211_frequency_to_channel(int freq)
 {
 	/* see 802.11 17.3.8.3.2 and Annex J */
+	if (freq==2407)
+	    return 0;
 	if (freq == 2484)
 		return 14;
-	else if (freq < 2484)
+	else if (freq < 2484 && freq > 2407)
 		return (freq - 2407) / 5;
+	else if (freq <2407)
+		return 236 + (freq - 2307)/5;  /* HamNET */
 	else if (freq >= 4910 && freq <= 4980)
 		return (freq - 4000) / 5;
 	else if (freq <= 45000) /* DMG band lower limit */
