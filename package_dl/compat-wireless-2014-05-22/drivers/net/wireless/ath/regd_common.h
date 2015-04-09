@@ -185,7 +185,7 @@ static struct reg_dmn_pair_mapping regDomainPairs[] = {
 	{FRANCE_RES, CTL_ETSI, CTL_ETSI},
 
 	{FCC1_WORLD, CTL_FCC, CTL_ETSI},
-	{FCC1_FCCA, CTL_FCC, CTL_FCC},
+	{FCC1_FCCA, NO_CTL, NO_CTL},
 	{APL1_WORLD, CTL_FCC, CTL_ETSI},
 	{APL2_WORLD, CTL_FCC, CTL_ETSI},
 	{APL3_WORLD, CTL_FCC, CTL_ETSI},
