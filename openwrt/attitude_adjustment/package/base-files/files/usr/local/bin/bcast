@@ -1,0 +1,67 @@
+#!/bin/sh
+# Copyright (C) 2009-2012 HB9XAR
+
+. /etc/config/bcast.conf
+
+# TTL configured?
+if [ "$IP_TTL" != "" ]; then
+    TTL="-L $IP_TTL";
+else
+    TTL="-L 1";
+fi
+
+while true; do
+
+	# if $NUM_INTERFACES = "auto", then try to figure out automagically
+	if [ "$NUM_INTERFACES" == "auto" ]; then
+		# get all Ethernet interfaces (other IF's are ignored)
+		ETH_IFS=`ifconfig |grep "Link encap:Ethernet"|cut -f1 -d' '`
+
+		I=0
+		for each in $ETH_IFS; do
+			I=$(($I+1))
+			eval INTERFACE_${I}=\"$each\"
+			eval MESSAGE_${I}=\"$MESSAGE\"
+		done
+		NUM_INTERFACES=$I
+	fi
+
+
+	# collect station info across all WLAN interfaces
+	# this one assumes that 'iw' returns empty on non-WLAN interface
+	STN_INFO=""
+	for each in `seq 1 $NUM_INTERFACES`; do
+		eval NAME=\$INTERFACE_${each}
+		T=`iw $NAME station dump | egrep '(Station|signal:|bitrate:)' | tr -d '/\(\)'`
+		if [ "$T" != "" ]; then
+			STN_INFO="$STN_INFO\n`echo $T`"
+		fi
+	done
+
+
+	# Loop through all collected interfaces and send
+	# the broadcast
+	for each in `seq 1 $NUM_INTERFACES`; do
+		eval NAME=\$INTERFACE_${each}
+		IP=`ifconfig $NAME|grep "inet addr":|sed -e 's/.*inet addr:\([^ ]\+\) .*/\1/'`
+		BC=`ifconfig $NAME|grep Bcast:|sed -e 's/.*Bcast:\([^ ]\+\) .*/\1/'`
+
+		# no BC interface or no IP set: skip
+		if [ "$BC" == "" -o "$IP" == "" ]; then continue; fi
+
+		eval MS=\$MESSAGE_${each}
+
+		# send BC via netcat
+		echo -e $MS | \
+		sed -e "s/%t/`date`/" \
+		    -e "s/%u/`uptime`/" \
+		    -e "s/%s/$STN_INFO/" \
+		    -e "s/%h/`uname -n`/" \
+		    -e "s/%n/$NAME/" \
+		    -e "s/%i/$IP/" \
+		 | ncat -u -W10 $TTL $BC $DST_PORT
+	done
+
+	sleep $DELAY
+done
+

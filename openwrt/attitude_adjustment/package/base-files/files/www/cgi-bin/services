@@ -1,0 +1,138 @@
+#!/usr/bin/haserl --shell=lua
+content-type: text/html
+
+<? 
+function trim(s)
+  return (s:gsub("^%s*(.-)%s*$", "%1"))
+end
+?>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<title>HamNET Router Information</title>
+	<style type="text/css">
+	    div.lpxcenterpageouter { text-align: center; position: absolute; top: 0px; left: 0px; width: 100% }
+	    div.lpxcenterpageinner { position: relative; margin: 0 auto; text-align: left; width: 950px; }
+		table.cbi-section-table .cbi-rowstyle-1,
+		table.cbi-section-table .cbi-rowstyle-1 * {
+		background-color: #f1f6fa;
+		color: #000000;
+		}
+		.cbi-section .cbi-rowstyle-1 h3 {
+		background-color: #f1f6fa;
+		color: #555555;
+		}
+		.cbi-rowstyle-2 {
+		background-color: #bdbdbd;
+		color: #000000;
+		}
+
+	</style>
+</head>	
+<body onunload="" alink="#4000FF" onload="" link="#4000FF" bgcolor="#1F1F1F" scroll="auto" vlink="#4000FF">
+<div class="lpxcenterpageouter"><div class="lpxcenterpageinner">
+<div style="background-color: #d8d8d8; position: absolute; top: 0px; left: 0px; width: 950px;  z-index: 0;">
+<img alt="" src="/images/bg.jpg" width="950"></div>
+<div style="position: absolute; top: 12px; left: 120px; width: 624px; height: 34px; z-index: 1;">
+<center><font size=5><font color=brown><b>HamNET Router Information</b></font></font></center></div>
+<div style="background-color: #d8d8d8; position: absolute; top: 106px; left: 0px; width: 950px; z-index: 2;">
+<center><hr width="835"></center>
+<pre><center><a href=status><img src=/images/status.png alt="" title="Staus Router Information"></a>&nbsp;&nbsp;&nbsp;<a href=netmesh><img src=/images/netmesh.png alt="" title="Mesh Network Information"></a>&nbsp;&nbsp;&nbsp;<a href=services><img src=/images/services.png alt="" title="Mesh Network Services"></a></center>
+<?
+function split(str, pat)
+   local t = {}  -- NOTE: use {n = 0} in Lua-5.0
+   local fpat = "(.-)" .. pat
+   local last_end = 1
+   local s, e, cap = str:find(fpat, 1)
+   while s do
+      if s ~= 1 or cap ~= "" then
+     table.insert(t,cap)
+      end
+      last_end = e+1
+      s, e, cap = str:find(fpat, last_end)
+   end
+   if last_end <= #str then
+      cap = str:sub(last_end)
+      table.insert(t, cap)
+   end
+   return t
+end
+
+local function _pcdata_repl(c)
+	    local i = string.byte(c)
+	
+	    if ( i >= 0x00 and i <= 0x08 ) or ( i >= 0x0B and i <= 0x0C ) or
+	       ( i >= 0x0E and i <= 0x1F ) or ( i == 0x7F )
+	    then
+	        return ""
+	       
+	    elseif ( i == 0x26 ) or ( i == 0x27 ) or ( i == 0x22 ) or
+	           ( i == 0x3C ) or ( i == 0x3E )
+	    then
+	        return string.format("&#%i;", i)
+	    end
+	
+	    return c
+	end
+function pcdata(value)
+	    return value and tostring(value):gsub("[&\"'<>%c]", _pcdata_repl)
+	end
+local i=1
+local services_file="/var/run/services_olsr"
+local f=io.open(services_file,"r")
+if f ==nil then 
+print("<br><fieldset style=\"margin-left:22px;margin-right:22px;\"><legend><b><font color=brown>Mesh Network Services</font></b></legend>")
+print("<h3>Currently there are no services avilable ...<br><br></h3></fieldset>")
+else
+rawdata=f:read("*a")
+function fetch_services()
+	    local tables = {}
+	    if rawdata and #rawdata ~= 0 then
+	        tables = split(trim(rawdata), "\n")
+	        -- remove first 3 lines
+	        for i = 1,3 do
+	            table.remove(tables,1)
+	        end
+	    end
+    -- store last line in last_update and remove it, then remove another empty line at the end
+	    last_update=table.remove(tables)
+	    table.remove(tables)
+        return tables
+end
+local services = fetch_services()
+local rv = {}?>
+<fieldset style="margin-left:22px;margin-right:22px;"><legend><b><font color="brown">&nbsp;Mesh Network Services&nbsp;</font></b></legend>
+<table class="cbi-section-table"><thead><tr style="background-color: #cccc99;">
+<th>Url</th>
+<th>Protocol&nbsp;</th>
+<th>Source</th>
+</tr></thead><tbody>
+<?
+        for k, line in ipairs(services) do
+		local filed={}
+	        local field = split(line, "[#|]")
+	        local origin_link = ""
+      local url, proto, descr, origin = pcdata(field[1]), pcdata(field[2]), trim(pcdata(field[3])), trim(pcdata(field[4]))
+if origin=="my own service" then
+ host="My own service"
+else
+local h="nslookup "..origin.."|grep -e "..origin.."|grep -e Address|cut -f4 -d\" \""
+local ho=io.popen(h)
+host = assert(ho:read('*a'))
+end
+	        print("<tr class=\"table.cbi-section-table-row cbi-rowstyle-"..i.."\">")
+	        print("<td><a href=\""..url.."\">"..descr.."</a>&nbsp;</td>")
+	        print("<td><center>"..proto.."</center></td>")
+	        print("<td><a href=\"http://"..origin..":8080/cgi-bin/status\">"..host.."</a></td>")
+		io.write("</tr>")
+	        i = ((i % 2) + 1)
+	        end 
+	        print("</tbody></table></fieldset><br />")
+end
+?>
+<center><img src=/images/logo-hamnetPL.png alt="" title="HamNET PL">   
+</div></div></div></div></div>
+<center>
+<div style="background-color: #d8d8d8; position: static; left: 15px; width: 950px; height:1000px;z-index: 3;"></div>
+</html>
+</body>

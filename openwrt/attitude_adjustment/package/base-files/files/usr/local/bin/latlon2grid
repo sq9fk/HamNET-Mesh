@@ -1,0 +1,23 @@
+#!/usr/bin/lua
+
+argc=#arg
+firstarg=1
+
+if argc< 1 then
+print("Usage: latlon2grid lat lon")
+end
+
+if argc >0 then
+lat=arg[1]
+lon=arg[2]
+lat=lat+90
+lon=lon+180
+g1=string.char(string.byte("A")+math.floor(lon/20))
+g2=string.char(string.byte("A")+math.floor(lat/10))
+g3=string.char(string.byte("0")+math.floor((lon%20)/2))
+g4=string.char(string.byte("0")+math.floor((lat%10)/1))
+g5=string.upper(string.char(string.byte("a")+math.floor((lon -math.floor(lon/2)*2)/(5/60))))
+g6=string.upper(string.char(string.byte("a")+math.floor((lat -math.floor(lat/1)*1)/(2.5/60))))
+print(g1..g2..g3..g4..g5..g6)
+end
+

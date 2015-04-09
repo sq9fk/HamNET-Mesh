@@ -1,0 +1,13 @@
+
+changeip	- Change IP address and Net-mask: changeip New_IP_address New_Netmask
+changename      - Change Node name : changename New_Node_Name
+changexy	- Change XY coordinates : changexy lat lon 
+edit            - Text editor
+hamnet		- Configuration for 2 GHz: hamnet Node_name IP_adress Netmask QRA-locator
+hamnet5		- Configuration for 5 GHz: hamnet5 Node_name IP_adress QRA-locator
+help		- Print commands
+iwinfo          - Information about radio interface
+links           - Show active hamnet links
+nodes		- Show active hamnet nodes
+neig		- Show neighbors
+skaner          - Scanner of channels

@@ -1,0 +1,24 @@
+#!/bin/sh
+
+if  [ "$1" = "" ]; then {
+echo "                 "                                                      
+echo " Please use command: changename Node_name"      
+echo " example: changename SP2ABC"              
+echo "                 "  
+} 
+else 
+{
+echo "Change Node name to $1  ... "                                 
+sed -ie "s/myname=`uname -n`/myname=$1/" /etc/config/setup
+sed -ie "s/option name '`uname -n`'/option name '$1'/" /etc/config/olsrd
+sed -ie "s/`ifconfig mesh0|grep -e \"inet addr:\"|cut -f2 -d:|cut -f1 -d\" \"` `uname -n` `uname -n`.ampr.org/`ifconfig mesh0|grep -e \"inet addr:\"|cut -f2 -d:|cut -f1 -d\" \"` $1 $1.ampr.org/" /etc/hosts
+uci set system.@system[0].hostname=$1                                 
+uci commit system                                                     
+echo $(uci get system.@system[0].hostname) > /proc/sys/kernel/hostname
+echo "======================================================================="
+echo "Node name updated to: $1  ... "
+echo "======================================================================="
+echo ""
+/etc/init.d/olsrd restart  >/dev/null 2>&1                                            
+}
+fi

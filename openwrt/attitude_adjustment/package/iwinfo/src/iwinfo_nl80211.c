@@ -341,23 +341,28 @@ static int nl80211_wait(const char *family, const char *group, int cmd)
 	return 0;
 }
 
-
 static int nl80211_freq2channel(int freq)
 {
+	if (freq == 2407)
+	    return 0;
 	if (freq == 2484)
 		return 14;
-	else if (freq < 2484)
+	else if (freq < 2484 && freq > 2407)
 		return (freq - 2407) / 5;
+	else if (freq <2407)
+		return 236 + (freq - 2307)/5;
 	else if (freq >= 4910 && freq <= 4980)
 		return (freq - 4000) / 5;
 	else
 		return (freq - 5000) / 5;
+
 }
 
 static int nl80211_channel2freq(int channel, const char *band)
 {
 	if (!band || band[0] != 'a')
 	{
+	channel = (int)(char)channel;
 		if (channel == 14)
 			return 2484;
 		else if (channel < 14)
@@ -373,6 +378,7 @@ static int nl80211_channel2freq(int channel, const char *band)
 
 	return 0;
 }
+
 
 static char * nl80211_getval(const char *ifname, const char *buf, const char *key)
 {

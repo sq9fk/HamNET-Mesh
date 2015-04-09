@@ -1,12 +1,8 @@
 config system
-	option hostname OpenWrt
+	option hostname HamNET
 	option timezone UTC
 
 config timeserver ntp
-	list server	0.openwrt.pool.ntp.org
-	list server	1.openwrt.pool.ntp.org
-	list server	2.openwrt.pool.ntp.org
-	list server	3.openwrt.pool.ntp.org
 
 config button
 	option button	reset
@@ -21,3 +17,15 @@ config button
 	option handler	"logger factory default"
 	option min		5
 	option max		30
+
+#config led
+#        option default '0'
+#        option name 'wlan'
+#        option sysfs 'gpio4'
+#        option trigger 'phy0tx'
+
+#config led
+#        option default '0'
+#        option name 'wlan'
+#        option sysfs 'gpio3'
+#        option trigger 'phy0rx'

@@ -1,0 +1,119 @@
+#!/bin/sh
+
+check=`ifconfig |grep -e mesh0|cut -f1 -d" "`
+
+if  [ "$4" = "" ]; then {
+echo "                 "                                                      
+echo " Please use command: hamnet NODE-name IP-address NET-mask QRA-Locator"      
+echo " example: hamnet SP2ABC-2 44.128.1.1 255.255.255.0 JO93HA"              
+echo "                 "  
+}
+elif  [ "$check" = "mesh0" ]; then {  
+echo "Setup Mesh interface .... "
+uci set network.mesh=interface
+uci set network.mesh.ifname=mesh0
+uci set network.mesh.proto=static
+uci set network.mesh.ipaddr=$2
+uci set network.mesh.netmask=$3
+#uci set network.mesh_mon=interface
+#uci set network.mesh_mon.proto=none
+uci commit network
+echo "Setup Mesh OLSR WIFI .... "
+uci set wireless.@wifi-iface[0].device=radio0
+uci set wireless.@wifi-iface[0].encryption=none
+uci set wireless.@wifi-iface[0].network=mesh
+uci set wireless.@wifi-iface[0].mode=adhoc
+uci set wireless.@wifi-iface[0].ssid=HamNET
+# BSSID 5 Ghz HamNET-5
+uci set wireless.@wifi-iface[-1].bssid=A2:84:B4:B8:94:D1
+uci set wireless.@wifi-iface[0].ifname=mesh0
+# Set main WIFI param                                    
+uci set wireless.@wifi-device[0].disabled=0              
+uci set wireless.@wifi-device[0].channel=135             
+uci set wireless.@wifi-device[0].hwmode=11an             
+uci set wireless.@wifi-device[0].chanbw=10                
+uci commit wireless                                      
+#uci add wireless wifi-iface                             
+#uci set wireless.@wifi-iface[-1].device=radio0          
+#uci set wireless.@wifi-iface[-1].mode=monitor           
+#uci set wireless.@wifi-iface[-1].network=mesh_mon       
+#uci set wireless.@wifi-iface[-1].ifname=mon0            
+#uci commit wireless                                     
+echo "Setup system ... "
+echo "myname=$1" >/etc/config/setup
+echo "myip=$2" >> /etc/config/setup
+echo "mynetmask=$3" >>/etc/config/setup
+echo "mylocator=$4" >>/etc/config/setup
+sed -ie "s/option lat `cat /etc/config/olsrd |grep -e \"option lat \"|cut -f3 -d\" \"`/option lat '`grid2latlon $4|cut -f1 -d\" \"`'/" /etc/config/olsrd
+sed -ie "s/option lon `cat /etc/config/olsrd |grep -e \"option lon \"|cut -f3 -d\" \"`/option lon '`grid2latlon $4|cut -f2 -d\" \"`'/" /etc/config/olsrd
+sed -ie "s/option name '`uname -n`'/option name '$1'/" /etc/config/olsrd
+sed -ie "s/`ifconfig mesh0|grep -e \"inet addr:\"|cut -f2 -d:|cut -f1 -d\" \"` `uname -n` `uname -n`.ampr.org/$2 $1 $1.ampr.org/" /etc/hosts
+uci set system.@system[0].hostname=$1                                 
+uci commit system                                                     
+echo $(uci get system.@system[0].hostname) > /proc/sys/kernel/hostname
+#echo "Restart network ... "                                                   
+#/etc/init.d/network restart                                                   
+echo "======================================================================="
+echo "HamNET network for $1 is ready on channel 135 - 5.675 GHz ... "
+echo "======================================================================="
+echo ""                                                                       
+echo "System reboot ..."                                                      
+reboot                               
+} 
+else 
+{
+echo "Setup Mesh interface .... "
+uci set network.mesh=interface
+uci set network.mesh.ifname=mesh0
+uci set network.mesh.proto=static
+uci set network.mesh.ipaddr=$2
+uci set network.mesh.netmask=$3
+#uci set network.mesh_mon=interface
+#uci set network.mesh_mon.proto=none
+uci commit network
+uci add wireless wifi-iface
+uci set wireless.@wifi-iface[-1].device=radio0 
+uci set wireless.@wifi-iface[-1].encryption=none
+uci set wireless.@wifi-iface[-1].network=mesh        
+uci set wireless.@wifi-iface[-1].mode=adhoc
+uci set wireless.@wifi-iface[-1].ssid=HamNET
+# BSSID 5 Ghz HamNET-5
+uci set wireless.@wifi-iface[-1].bssid=A2:84:B4:B8:94:D1
+uci set wireless.@wifi-iface[-1].ifname=mesh0
+# Set main WIFI param
+uci set wireless.@wifi-device[0].disabled=0 
+uci set wireless.@wifi-device[0].channel=135 
+uci set wireless.@wifi-device[0].hwmode=11an
+uci set wireless.@wifi-device[0].chanbw=10
+uci commit wireless
+#uci add wireless wifi-iface
+#uci set wireless.@wifi-iface[-1].device=radio0
+#uci set wireless.@wifi-iface[-1].mode=monitor
+#uci set wireless.@wifi-iface[-1].network=mesh_mon
+#uci set wireless.@wifi-iface[-1].ifname=mon0
+#uci commit wireless  
+echo "Setup system ... "
+echo "myname=$1" >/etc/config/setup
+echo "myip=$2" >> /etc/config/setup
+echo "mynetmask=$3" >>/etc/config/setup
+echo "mylocator=$4" >>/etc/config/setup
+sed -ie "s/option lat `cat /etc/config/olsrd |grep -e \"option lat \"|cut -f3 -d\" \"`/option lat '`grid2latlon $4|cut -f1 -d\" \"`'/" /etc/config/olsrd
+sed -ie "s/option lon `cat /etc/config/olsrd |grep -e \"option lon \"|cut -f3 -d\" \"`/option lon '`grid2latlon $4|cut -f2 -d\" \"`'/" /etc/config/olsrd
+#uci set system.@system[0].hostname=$1.ampr.org
+uci set system.@system[0].hostname=$1
+uci commit system
+echo $(uci get system.@system[0].hostname) > /proc/sys/kernel/hostname
+echo "        option name '$1'" >>/etc/config/olsrd
+echo "$2 $1 $1.ampr.org" >>/etc/hosts
+/etc/init.d/olsrd enable
+#echo "Restart network ... "
+#/etc/init.d/network restart 
+#wifi
+echo "======================================================================="
+echo "HamNET network for $1 is ready on channel 135 - 5.675 GHz ... "
+echo "======================================================================="
+echo ""
+echo "System reboot ..."
+reboot
+}
+fi

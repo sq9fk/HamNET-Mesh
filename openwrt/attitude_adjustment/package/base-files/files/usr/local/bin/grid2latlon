@@ -1,0 +1,49 @@
+#!/usr/bin/lua
+
+argc=#arg
+firstarg=1
+
+function trim(s)
+  return (s:gsub("^%s*(.-)%s*$", "%1"))
+end
+
+if argc< 1 then
+print("Usage: grid2latlon grid")
+end
+
+if argc >0 then
+g=arg[1]
+grid=trim(g)
+g1=string.upper(string.sub(grid,1,1))
+g2=string.upper(string.sub(grid,2,2))
+g3=string.sub(grid,3,3)
+g4=string.sub(grid,4,4)
+g5=string.upper(string.sub(grid,5,5))
+g6=string.upper(string.sub(grid,6,6)) 
+lon1=(string.byte(g1)-string.byte("A"))*20-180
+lat1=(string.byte(g2)-string.byte("A"))*10-90
+lon2=(string.byte(g3)-string.byte("0"))*2
+lat2=(string.byte(g4)-string.byte("0"))*1
+local glen=string.len(grid)
+if (glen >= 5) then
+  lon3 = (string.byte(g5) - string.byte("A"))*5/60
+  lat3 = (string.byte(g6) - string.byte("A"))*(2.5/60)
+  lon4 = 2.5/60
+  lat4 = 1.25/60
+  lat=lat1+lat2+lat3+lat4
+  lon=lon1+lon2+lon3+lon4
+  formatter = "%.5f"
+else 
+  lon3 = 1
+  lat3 = 0.5
+  lat=lat1+lat+2+lat3
+  lon=lon1+lon2+lon3
+  formatter = "%.1f"
+end
+                 
+io.write(string.format(formatter,lat))
+io.write(" ")
+io.write(string.format(formatter,lon))
+print()
+end
+

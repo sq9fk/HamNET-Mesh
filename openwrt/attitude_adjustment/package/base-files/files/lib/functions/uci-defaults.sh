@@ -172,7 +172,7 @@ set network.lan='interface'
 set network.lan.ifname='$ifname'
 set network.lan.type='bridge'
 set network.lan.proto='static'
-set network.lan.ipaddr='192.168.1.1'
+set network.lan.ipaddr='172.16.1.1'
 set network.lan.netmask='255.255.255.0'
 EOF
 }
@@ -183,7 +183,6 @@ ucidef_set_interface_wan() {
 	uci batch <<EOF
 set network.wan='interface'
 set network.wan.ifname='$ifname'
-set network.wan.proto='dhcp'
 EOF
 }
 

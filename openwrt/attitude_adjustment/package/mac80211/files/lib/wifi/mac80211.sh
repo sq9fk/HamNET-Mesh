@@ -414,7 +414,8 @@ enable_mac80211() {
 		#
 		# ALL station functionality will be passed to wpa_supplicant
 		#
-		if [ ! "$mode" = "ap" ]; then
+#		if [ ! "$mode" = "ap" ]; then
+		if [ ! "$mode" = "adhoc" ]; then
 			# We attempt to set the channel for all interfaces, although
 			# mac80211 may not support it or the driver might not yet
 			# for ap mode this is handled by hostapd
@@ -599,8 +600,8 @@ detect_mac80211() {
 		[ "$found" -gt 0 ] && continue
 
 		mode_11n=""
-		mode_band="g"
-		channel="11"
+		mode_band="b"
+		channel="1"
 		ht_cap=0
 		for cap in $(iw phy "$dev" info | grep 'Capabilities:' | cut -d: -f2); do
 			ht_cap="$(($ht_cap | $cap))"
@@ -634,19 +635,25 @@ detect_mac80211() {
 		cat <<EOF
 config wifi-device  radio$devidx
 	option type     mac80211
-	option channel  ${channel}
-	option hwmode	11${mode_11n}${mode_band}
+	option channel  247       
+#	option channel  ${channel}
+	option txantenna   2      #  1 -  EXTERNAL,  2 -  VERTICAL, 3 - HORIZONTAL
+	option rxantenna   2      #  1 -  EXTERNAL,  2 -  VERTICAL, 3 - HORIZONTAL
+	option diversity   0      # diveristy ( 0 disable | 1 enable )
+	option chanbw   5         # chanbw  ( 5/10/20 Mhz)
+	option distance  7000 
+	option short_premable 0
+	option beacon_int 222
+	option rts 250
+	option frag 512
+	option noscan 0 
+	option hwmode	11bg
+#	option hwmode	11${mode_band}
+	option txpower 16
 $dev_id
-$ht_capab
+# $ht_capab
 	# REMOVE THIS LINE TO ENABLE WIFI:
 	option disabled 1
-
-config wifi-iface
-	option device   radio$devidx
-	option network  lan
-	option mode     ap
-	option ssid     OpenWrt
-	option encryption none
 
 EOF
 	devidx=$(($devidx + 1))

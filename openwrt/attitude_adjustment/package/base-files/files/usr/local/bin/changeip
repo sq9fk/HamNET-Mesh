@@ -1,0 +1,29 @@
+#!/bin/sh
+
+if  [ "$2" = "" ]; then {
+echo "                 "                                                      
+echo " Please use command: changeip IP-address NET-mask"      
+echo " example: changeip 44.128.1.1 255.255.255.0"              
+echo "                 "  
+} 
+else 
+{
+echo "Setup Mesh IP address interface .... "
+sed -ie "s/myip=`ifconfig mesh0|grep -e \"inet addr:\"|cut -f2 -d:|cut -f1 -d\" \"`/myip=$1/" /etc/config//setup
+sed -ie "s/mynetmask=`ifconfig mesh0|grep -e \"inet addr:\"|cut -f4 -d:|cut -f1 -d\" \"`/mynestmask=$2/" /etc/config/setup
+sed -ie "s/`ifconfig mesh0|grep -e \"inet addr:\"|cut -f2 -d:|cut -f1 -d\" \"` `uname -n` `uname -n`.ampr.org/$1 `uname -n` `uname -n`.ampr.org/" /etc/hosts
+uci set network.mesh.ipaddr=$1
+uci set network.mesh.netmask=$2
+uci commit network
+wifi
+/etc/init.d/olsrd restart  >/dev/null 2>&1                                            
+echo "======================================================================="
+echo "IP address: $1  and netmask: $2 updated "
+echo "======================================================================="
+echo ""
+echo "Restart network ... "
+/etc/init.d/network restart 
+#echo "System will be reboot..."
+#reboot
+}
+fi

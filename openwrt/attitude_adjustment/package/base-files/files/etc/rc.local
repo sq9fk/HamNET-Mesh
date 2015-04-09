@@ -1,4 +1,23 @@
 # Put your custom commands here that should be executed once
 # the system init finished. By default this file does nothing.
 
+/usr/sbin/httpd -p8080 -h /www
+
+#You can set the ani and all other receiving sensivity values via debugfs:
+
+#configuration of ath5k's ANI settings
+
+# automatically control immunity OFF:
+echo "ani-off" > /sys/kernel/debug/ieee80211/phy0/ath5k/ani
+
+# set lowest sensitivity (=highest noise immunity)
+echo "sens-low" > /sys/kernel/debug/ieee80211/phy0/ath5k/ani
+
+# set highest sensitivity (=lowest noise immunity):
+#echo "sens-high" > /sys/kernel/debug/ieee80211/phy0/ath5k/ani
+
+# automatically control immunity (default):
+# echo "ani-on" > /sys/kernel/debug/ieee80211/phy0/ath5k/ani
+
+
 exit 0
