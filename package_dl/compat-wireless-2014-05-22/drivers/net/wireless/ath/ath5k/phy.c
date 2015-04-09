@@ -2812,6 +2812,8 @@ ath5k_get_max_ctl_power(struct ath5k_hw *ah,
 	 * edge power for our frequency */
 	if (ctl_idx == 0xFF)
 		return;
+	
+	return;
 
 	/* Edge powers are sorted by frequency from lower
 	 * to higher. Each CTL corresponds to 8 edge power
