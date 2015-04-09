@@ -186,10 +186,10 @@ do {									\
 #define AR5K_TUNE_CWMAX				1023
 #define AR5K_TUNE_CWMAX_11B			1023
 #define AR5K_TUNE_CWMAX_XR			7
-#define AR5K_TUNE_NOISE_FLOOR			-72
-#define AR5K_TUNE_CCA_MAX_GOOD_VALUE		-95
+#define AR5K_TUNE_NOISE_FLOOR			-95
+#define AR5K_TUNE_CCA_MAX_GOOD_VALUE		-115
 #define AR5K_TUNE_MAX_TXPOWER			63
-#define AR5K_TUNE_DEFAULT_TXPOWER		25
+#define AR5K_TUNE_DEFAULT_TXPOWER		30  /* bylo 25 */
 #define AR5K_TUNE_TPC_TXPOWER			false
 #define ATH5K_TUNE_CALIBRATION_INTERVAL_FULL    60000   /* 60 sec */
 #define	ATH5K_TUNE_CALIBRATION_INTERVAL_SHORT	10000	/* 10 sec */
@@ -1239,11 +1239,11 @@ struct ath5k_statistics {
 
 #define AR5K_MAX_GPIO		10
 #define AR5K_MAX_RF_BANKS	8
-
+/* HAMNET */
 #if CHAN_DEBUG
-#define ATH_CHAN_MAX	(26 + 26 + 26 + 200 + 200)
+#define ATH_CHAN_MAX	(28 + 28 + 28 + 200 + 200)
 #else
-#define ATH_CHAN_MAX	(14 + 14 + 14 + 252 + 20)
+#define ATH_CHAN_MAX	(28 + 28 + 28 + 252 + 20)
 #endif
 
 #define	ATH_RXBUF	40		/* number of RX buffers */

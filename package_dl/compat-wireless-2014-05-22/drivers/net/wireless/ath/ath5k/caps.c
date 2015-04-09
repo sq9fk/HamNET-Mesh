@@ -82,7 +82,7 @@ int ath5k_hw_set_capabilities(struct ath5k_hw *ah)
 		    (AR5K_EEPROM_HDR_11G(ee_header) &&
 		     ah->ah_version != AR5K_AR5211)) {
 			/* 2312 */
-			caps->cap_range.range_2ghz_min = 2412;
+			caps->cap_range.range_2ghz_min = 2312;
 			caps->cap_range.range_2ghz_max = 2732;
 
 			/* Override 2GHz modes on SoCs that need it
