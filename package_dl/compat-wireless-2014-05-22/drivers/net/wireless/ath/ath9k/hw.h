@@ -66,11 +66,11 @@
 
 #define ATH_AMPDU_LIMIT_MAX        (64 * 1024 - 1)
 
-#define	ATH_DEFAULT_NOISE_FLOOR -95
+#define	ATH_DEFAULT_NOISE_FLOOR -112
 
 #define ATH9K_RSSI_BAD			-128
 
-#define ATH9K_NUM_CHANNELS	38
+#define ATH9K_NUM_CHANNELS	63
 
 /* Register read/write primitives */
 #define REG_WRITE(_ah, _reg, _val) \

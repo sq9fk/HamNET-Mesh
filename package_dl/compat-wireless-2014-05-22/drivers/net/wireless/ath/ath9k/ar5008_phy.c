@@ -283,7 +283,7 @@ static void ar5008_hw_spur_mitigate(struct ath_hw *ah,
 		if (AR_NO_SPUR == cur_bb_spur)
 			break;
 		cur_bb_spur = cur_bb_spur - (chan->channel * 10);
-		if ((cur_bb_spur > -95) && (cur_bb_spur < 95)) {
+		if ((cur_bb_spur > -112) && (cur_bb_spur < 95)) { 
 			bb_spur = cur_bb_spur;
 			break;
 		}
