@@ -19,7 +19,7 @@
 #include "ar9003_phy.h"
 #include "ar9003_eeprom.h"
 #include "ar9003_mci.h"
-
+u8 mod_eeprompwr[ar9300RateSize];
 #define COMP_HDR_LEN 4
 #define COMP_CKSUM_LEN 2
 
@@ -4648,6 +4648,7 @@ static void ar9003_hw_get_target_power_eeprom(struct ath_hw *ah,
 		ath_dbg(common, REGULATORY, "TPC[%02d] 0x%08x\n",
 			i, targetPowerValT2[i]);
 	}
+memcpy(mod_eeprompwr,targetPowerValT2,ar9300RateSize); /* HamNET */
 }
 
 static int ar9003_hw_cal_pier_get(struct ath_hw *ah,
@@ -5032,7 +5033,7 @@ static u16 ar9003_hw_get_indirect_edge_power(struct ar9300_eeprom *eep,
 			return CTL_EDGE_TPOWER(ctl_5g[idx].ctlEdges[edge - 1]);
 	}
 
-	return MAX_RATE_POWER;
+	return MAX_RATE_POWER; /* +12  HamNET */
 }
 
 /*
@@ -5078,7 +5079,7 @@ static u16 ar9003_hw_get_max_edge_power(struct ar9300_eeprom *eep,
 	}
 
 	if (is2GHz && !twiceMaxEdgePower)
-		twiceMaxEdgePower = 60;
+		twiceMaxEdgePower = 66;  /* HamNET bylo 60 */
 
 	return twiceMaxEdgePower;
 }
@@ -5384,7 +5385,7 @@ static void ath9k_hw_ar9300_set_txpower(struct ath_hw *ah,
 
 	if (test)
 		return;
-
+memcpy(targetPowerValT2,mod_eeprompwr,ar9300RateSize); /* HamNET */
 	for (i = 0; i < ar9300RateSize; i++) {
 		ath_dbg(common, REGULATORY, "TPC[%02d] 0x%08x\n",
 			i, targetPowerValT2[i]);
