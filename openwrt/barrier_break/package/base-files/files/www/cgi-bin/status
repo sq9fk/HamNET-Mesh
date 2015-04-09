@@ -1,0 +1,223 @@
+#!/usr/bin/haserl --shell=lua
+content-type: text/html
+
+<? 
+function trim(s)
+  return (s:gsub("^%s*(.-)%s*$", "%1"))
+end
+function stripchars(str, chrs)
+  local s = str:gsub("["..chrs.."]", '')
+  return s
+end
+?>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<title>HamNET Router Information</title>
+	<style type="text/css">
+	    div.lpxcenterpageouter { text-align: center; position: absolute; top: 0px; left: 0px; width: 100% }
+	    div.lpxcenterpageinner { position: relative; margin: 0 auto; text-align: left; width: 950px; }
+		table.cbi-section-table .cbi-rowstyle-1,
+		table.cbi-section-table .cbi-rowstyle-1 * {
+		background-color: #f1f6fa;
+		color: #000000;
+		}
+		.cbi-section .cbi-rowstyle-1 h3 {
+		background-color: #f1f6fa;
+		color: #555555;
+		}
+		.cbi-rowstyle-2 {
+		background-color: #bdbdbd;
+		color: #000000;
+		}
+
+	</style>
+</head>	
+<body onunload="" alink="#4000FF" onload="" link="#4000FF" bgcolor="#1F1F1F" scroll="auto" vlink="#4000FF">
+<div class="lpxcenterpageouter"><div class="lpxcenterpageinner">
+<div style="background-color: #d8d8d8; position: absolute; top: 0px; left: 0px; width: 950px;  z-index: 0;">
+<img alt="" src="/images/bg.jpg" width="950"></div>
+<div style="position: absolute; top: 12px; left: 120px; width: 624px; height: 34px; z-index: 1;">
+<center><font size=5><font color=brown><b>HamNET Router Information</b></font></font></center></div>
+<div style="background-color: #d8d8d8; position: absolute; top: 106px; left: 0px; width: 950px; z-index: 2;">
+<center><hr width="835"></center><pre><?
+local f=io.popen("ifconfig|grep -e mesh0")
+local test=f:read("*a")
+if test =="" then
+print("<br><fieldset style=\"margin-left:22px;margin-right:22px;\"><legend><b><font color=red>&nbsp;Netork Mesh Configuration&nbsp;</font></b></legend>")
+print("<h3>Your HamNET Mesh network is not configured.<br>Please check your mesh network configuration or run in console command:<br><br><font color=blue>\"hamnet node-name ip-address netmask\"</font><br><br></h3></fieldset>")
+else
+?><center><a href=status><img src=/images/status.png alt="" title="Router Information"></a>&nbsp;&nbsp;&nbsp;<a href=netmesh><img src=/images/netmesh.png alt="" title="Mesh Network Information"></a>&nbsp;&nbsp;&nbsp;<a href=services><img src=/images/services.png alt="" title="Mesh Network Servcies"></a></center>
+<fieldset style="margin-left:22px;margin-right:22px;"><legend><b><font color="brown">&nbsp;General system information&nbsp;</font></b></legend>
+<table><thead><tr style="background-color:#cccc99;" >
+<th>Node name&nbsp;</th>
+<th>IP address&nbsp;</th>
+<th>Netmask&nbsp;</th>
+<th>QRA Locator</th>
+<th colspan=2><center>Current location</center></th>
+</tr></thead>
+<tr style="background-color: #f1f6fa;color:#000099;"><td><? 
+local f=io.popen("uname -n")  print(string.upper(trim(f:read("*a")))) ?></td><td><? 
+local f=io.popen("ifconfig mesh0|grep -e \"inet addr:\"|cut -f2|awk '{print $2;}'|cut -f2 -d:") 
+local ip=trim(f:read("*a")) io.write(ip)?>
+</td><td><? 
+local f=io.popen("ifconfig mesh0|grep -e \"inet addr:\"|cut -f2|awk '{print $4;}'|cut -f2 -d:") 
+io.write(trim(f:read("*a")))
+?></td><td><? 
+local f=io.popen("cat /etc/config/setup |grep mylocator|cut -f2 -d=")
+print(string.upper(trim(f:read("*a"))))
+?></td><?
+local f=io.popen("cat /etc/config/olsrd |grep -e \"option lat \"|cut -f3 -d\" \"")
+lat=stripchars(f:read("*a"),"'")
+io.write("<td>Lat: "..lat.."</td>")
+local f=io.popen("cat /etc/config/olsrd |grep -e \"option lon \"|cut -f3 -d\" \"")
+lon=stripchars(f:read("*a"),"'")
+io.write("<td> Lon: "..lon.."</td>")
+?></tr><tr></tr><tr></tr><thead><tr  style="background-color: #cccc99;">
+<th colspan=2>Hardware&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
+<th colspan=7>System version</th></tr></thead>
+<tr style="background-color: #f1f6fa;color:#000099;">
+<td colspan=2><? 
+local f=io.popen("iwinfo mesh0 info |grep -e Hardware|cut -f2 -d[")
+model=stripchars(trim(f:read("*a")),"]")
+if model=="Generic MAC80211" then
+local f=io.popen("cat /var/sysinfo/model")
+model=trim(f:read("*a"))
+end
+io.write(model)
+?></td>
+<td colspan=7>HamNET-Mesh OpenWRT v<?
+f=io.popen("cat /etc/openwrt_release|grep -eDISTRIB_DESCRIPTION|cut -f2 -d=")
+ve=trim(f:read("*a"))
+ver=string.gsub(string.gsub(ve,'%"',''),'%"','')
+io.write(ver)
+?> by SP2ONG & SP9FUT </td></tr><tr></tr><tr></tr>
+<thead><tr  style="background-color: #cccc99;">
+<th>Channel #</th>
+<th>SSID</th>
+<th>Channel BW</th>
+<th>TX-Power&nbsp;</th>
+<th>Bit Rate&nbsp;</th>
+<th>Link Quality</th>
+<th><center>Signal</center></th>
+<th><center>Noise</center></th>
+<th><center>SNR AVG</center></th></tr></thead><tr style="background-color: #f1f6fa; color:#000099;">
+<td><? 
+local f=io.popen("iwinfo mesh0 info |grep -e Channel|awk '{print $4\" \"$5\" \"$6}'") 
+print(trim(f:read("*a")).." ")
+?></td>
+<td><? 
+local f=io.popen("iw mesh0 info|grep -essid|cut -f2 -d\" \"") 
+print(trim(f:read("*a"))) 
+?></td>
+<td><center><?
+local fchanbw="/sys/kernel/debug/ieee80211/phy0/ath9k/chanbw"
+local f=io.open(fchanbw,"r")
+if f ==nil then 
+fa=io.popen("cat /sys/kernel/debug/ieee80211/phy0/ath5k/bwmode")
+bwa=fa:read("*a")
+bwa=string.match(bwa,'%[%d+%]')
+bw=string.gsub(string.gsub(bwa,'%[',''),'%]','')
+else
+fa=io.popen("cat /sys/kernel/debug/ieee80211/phy0/ath9k/chanbw")             
+bw=fa:read("*a")                                                    
+bw=string.gsub(bw,"%W",'')
+bw=tonumber(bw,16)
+end
+print(bw.." MHz")
+?></td>
+<td><center><? 
+local f=io.popen("iwinfo mesh0 info|grep -eTx|cut -f2 -d:|awk '{print $1}'") 
+pwr=trim(f:read("*a"))
+local cp="/usr/local/bin/dbm2watt "..pwr..""
+local f=io.popen(cp)
+io.write(f:read("*a"))
+?></center></td>
+<td><center><?
+local f=io.popen("iwinfo |grep -e Bit|cut -f2 -d:")
+print(trim(f:read("*a")))
+?></center></td>
+<td><center><?
+local f=io.popen("iwinfo mesh0 info|grep -eTx|cut -f3 -d:|cut -f1 -d/")
+chlq=trim(f:read("*a"))
+if (chlq=="unknown") then
+print("---")
+else
+local f=io.popen("iwinfo mesh0 info|grep -eTx|cut -f3 -d:") 
+print(trim(f:read("*a"))) 
+end
+?></center></td> 
+<td><center><? 
+local f=io.popen("iwinfo mesh0 info|grep -eSignal|cut -f2 -d:|awk '{print $1}'") 
+local sig=tostring(trim(f:read("*a")))
+if (sig=="unknown") then
+print("---")
+else
+print(tonumber(sig).." dBm ")
+end
+?></center></td>
+<td><center><? local f=io.popen("iwinfo mesh0 info|grep -eSignal|cut -f3 -d:|awk '{print $1}'") 
+local noise=tostring(trim(f:read("*a")))
+if (noise=="unknown" and sig=="unknown") then
+print("---")
+elseif (noise=="unknown") then
+noise=-112
+print(noise.." dBm")
+elseif (noise ~= nil) then
+print(noise.." dBm ")
+end 
+?></center></td>
+<td><center><? 
+if (noise=="unknown" and sig=="unknown") then
+print("---")
+elseif (sig=="unknown") then
+print("---")
+else
+snr=math.abs((noise*-1)-(sig*-1))
+print(snr)
+end
+?></center></td> 
+<tr></tr><tr></tr>
+<thead><tr  style="background-color: #cccc99;">
+<th>RTS threshold</th>
+<th colspan=2>Fragmentation threshold</th>
+<th>Distance</th>
+</tr></thead><tr style="background-color: #f1f6fa; color:#000099;"><td><center><?
+local f=io.popen("iw list|grep -e RTS|cut -f2 -d:")
+rts=trim(f:read("*a"))
+if rts~=nil then
+io.write(rts)
+else
+io.write("off")
+end
+io.write("</center></td><td colspan=2><center>")
+local f=io.popen("iw list|grep -e Frag|cut -f2 -d:")
+cts=trim(f:read("*a"))
+if cts~=nil then
+io.write(cts)
+else
+io.write("off")
+end
+io.write("</center></td><td><center>")
+local f=io.popen("iw list|grep -e Coverage|cut -f2 -d\"(\"")
+io.write(stripchars(trim(f:read("*a")),')'))
+io.write("</center></td></tr>")?>
+<tr><td colspan=2><br><b>System time: </b><font color=#000099><? local f=io.popen("date|awk '{print \" \"$4\" \"$5}'") 
+print(trim(f:read("*a"))) ?></font></td>
+<td colspan=6><br><b>Uptime: </b><font color=#000099><? local f=io.popen("uptime|awk '{print $3\" \"$4\" \"$5\" \"$6\" \"$7\" \"$8\" \"$9;}'") 
+print(trim(f:read("*a"))) ?></font></td></tr></table>
+<b><font color="brown">Free space:</font></b>
+<table><thead><tr style="background-color: #cccc99;">
+<th>flash&nbsp;&nbsp;&nbsp;&nbsp;</th>
+<th>/tmp&nbsp;&nbsp;&nbsp;&nbsp;</th>
+<th>memory (kB)</th></tr></thead><tr style="background-color: #f1f6fa; color:#000099;">
+<td><? local f=io.popen("df -h |grep -e rootfs|awk '{print $4;}'") 
+print(trim(f:read("*a"))) ?></td>
+<td><? local f=io.popen("df -h | grep -e /tmp|awk '{print $4;}'") 
+print(trim(f:read("*a"))) ?></td>
+<td><? local f=io.popen("free |grep -e Mem|awk '{print $4;}'") 
+print(trim(f:read("*a"))) ?></td></tr></table><br></fieldset>
+<? end?>
+<center><img src=/images/logo-hamnetPL.png alt="" title="HamNET PL">
+</html>
+</body>

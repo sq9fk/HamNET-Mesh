@@ -1,0 +1,22 @@
+#!/usr/bin/lua
+
+argc=#arg
+firstarg=1
+
+if argc< 1 then
+print("Usage: getpower power_dbm")
+end
+
+if argc >0 then
+dbm=arg[1]
+dbm=dbm/10
+dbm=math.pow(10,dbm)
+if dbm>=1000 then
+watt=" W"
+dbm=dbm/1000
+else
+watt=" mW"
+end
+print(string.format("%.0f",dbm)..watt)
+end
+

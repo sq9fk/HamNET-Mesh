@@ -1,0 +1,206 @@
+#!/usr/bin/haserl --shell=lua
+content-type: text/html
+
+<? 
+function trim(s)
+  return (s:gsub("^%s*(.-)%s*$", "%1"))
+end
+?>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<title>HamNET Router Information</title>
+	<style type="text/css">
+	    div.lpxcenterpageouter { text-align: center; position: absolute; top: 0px; left: 0px; width: 100% }
+	    div.lpxcenterpageinner { position: relative; margin: 0 auto; text-align: left; width: 950px; }
+		table.cbi-section-table .cbi-rowstyle-1,
+		table.cbi-section-table .cbi-rowstyle-1 * {
+		background-color: #f1f6fa;
+		color: #000000;
+		}
+		.cbi-section .cbi-rowstyle-1 h3 {
+		background-color: #f1f6fa;
+		color: #555555;
+		}
+		.cbi-rowstyle-2 {
+		background-color: #bdbdbd;
+		color: #000000;}
+
+	</style>
+</head>	
+<body onunload="" alink="#4000FF" onload="" link="#4000FF" bgcolor="#1F1F1F" scroll="auto" vlink="#4000FF">
+<div class="lpxcenterpageouter"><div class="lpxcenterpageinner">
+<div style="background-color: #d8d8d8; position: absolute; top: 0px; left: 0px; width: 950px; z-index: 0;">
+<img alt="" src="/images/bg.jpg" width="950" ></div>
+<div style="position: absolute; top: 12px; left: 120px; width: 624px; height: 34px; z-index: 1;">
+<center><font size=5><font color=brown><b>HamNET Router Information</b></font></font></center></div>
+<div style="background-color: #d8d8d8; position: absolute; top: 106px; left: 0px; width: 950px; z-index: 2;">
+<center><hr width="835"></center><pre><?
+local fpid=io.popen("pgrep -o olsrd")
+local pid=fpid:read("*n")
+if pid==nil then
+print("<br><fieldset style=\"margin-left:22px;margin-right:22px;\"><legend><b><font color=red>&nbsp;Netork Mesh Configuration&nbsp;</font></b></legend>")
+print("<h3>OLSRD process is not running. Please check your mesh network configuration<br><br></h3></fieldset>")
+else
+local f=io.popen("ifconfig mesh0|grep -e \"inet addr:\"|cut -f2|awk '{print $2;}'|cut -f2 -d:") 
+ip=trim(f:read("*a"))
+?><center><a href=status><img src=/images/status.png alt="" title="Staus Router Information"></a>&nbsp;&nbsp;&nbsp;<a href=netmesh><img src=/images/netmesh.png alt="" title="Mesh Network Information"></a>&nbsp;&nbsp;&nbsp;<a href=services><img src=/images/services.png alt="" title="Mesh Network Servcies"></a></center>
+<span style="position: absolute; top: 75px; left: 760px; width: 674px; height: 34px;"><b><font color="brown">OLSR information:</font></b><a href="http://<? print(ip) ?>:1978/nodes"><img src="/images/olsr.gif" height=35 alt="" title="OLSR status" style="vertical-align: bottom;"></a></span><br>
+<fieldset style="margin-left:22px;margin-right:22px;"><legend><b><font color="brown">&nbsp;Neighbors&nbsp;</font></b></legend><br><?
+local json=require("dkjson")
+function etx_color(etx)
+	local color = "#bb3333"
+	if etx == 0 then
+		color = "#bb3333"
+	elseif etx < 2 then
+		color = "#00cc00"
+	elseif etx < 4 then
+		color = "#ffcb05"
+	elseif etx < 10 then
+		color = "#ff6600"
+	end
+	return color
+end
+function snr_color(snr)
+    local color = "#bb3333"
+    if snr == 0 then
+	color = "#bb3333"
+    elseif snr > 30 then
+	color = "#00cc00"
+    elseif snr > 20 then
+	color = "#ffcb05"
+    elseif snr > 5 then
+	color = "#ff6600"
+    end
+    return color
+end
+function split(str, pat)
+   local t = {}  -- NOTE: use {n = 0} in Lua-5.0
+   local fpat = "(.-)" .. pat
+   local last_end = 1
+   local s, e, cap = str:find(fpat, 1)
+   while s do
+      if s ~= 1 or cap ~= "" then
+     table.insert(t,cap)
+      end
+      last_end = e+1
+      s, e, cap = str:find(fpat, last_end)
+   end
+   if last_end <= #str then
+      cap = str:sub(last_end)
+      table.insert(t, cap)
+   end
+   return t
+end
+function distance(lat1,lon1,lat2,lon2)
+pi80=math.pi/180
+lat1=lat1*pi80
+lat2=lat2*pi80
+lon1=lon1*pi80
+lon2=lon2*pi80
+r=6372.797
+dlat= lat2-lat1
+dlon=lon2-lon1
+a=math.sin(dlat/2)*math.sin(dlat/2)+math.cos(lat1)*math.cos(lat2)*math.sin(dlon/2)*math.sin(dlon/2)
+c=2*math.atan2(math.sqrt(a),math.sqrt(1-a))
+km=r*c
+  return km*1000
+end
+os.execute("cat /var/run/latlon.js>/tmp/latlon.js")
+aa="cat /tmp/latlon.js |grep -e Self |cut -f 2 -d,"
+a1=io.popen(aa)
+at1 = tonumber(trim(assert(a1:read('*a'))))
+oo="cat /tmp/latlon.js |grep -e Self |cut -f 3 -d,"
+o1=io.popen(oo)
+on1 = tonumber(trim(assert(o1:read('*a'))))
+local ii=1
+local data={}
+local test=""
+local f=io.popen("echo /links | nc 127.0.0.1 9090")
+print("<table width=60% class=\"cbi-section-table\"><thead style=\"background-color: #cccc99;\"><tr><th>Neighbor IP</th><th>Hostname</th><th>Distance [m]</th><th>LQ</th><th>NLQ</th><th>ETX</th></tr></thead>")
+for line in f:lines() do
+test=test..line
+end
+local data=json.decode(test)
+for k,v in pairs(data.links) do
+for k,i in pairs(v) do
+end
+v.linkCost=tonumber(v.linkCost)/1024 or 0
+if v.linkCost==4096 then
+ v.linkCost=0
+end
+colorE=etx_color(v.linkCost)
+v.linkCost=string.format("%.3f",v.linkCost)
+v.neighborLinkQuality=string.format("%.3f",v.neighborLinkQuality)
+v.linkQuality=string.format("%.3f",v.linkQuality)
+v.remoteIP=trim(v.remoteIP)
+a2="cat /tmp/latlon.js |grep -e Node |grep -e "..v.remoteIP.."| cut -f 2 -d,"
+at2=io.popen(a2)
+at2 = tonumber(trim(assert(at2:read('*a'))))
+o2="cat /tmp/latlon.js |grep -e Node |grep -e "..v.remoteIP.."| cut -f 3 -d,"
+on2=io.popen(o2)
+on2 = tonumber(trim(assert(on2:read('*a'))))
+if (at1 ~=nil and on1 ~= nil and at2 ~= nil and on2 ~= nil) then
+dist=math.floor(distance(at1,on1,at2,on2))
+else
+dist="???"
+end
+local h="nslookup "..v.remoteIP.."|grep -e "..v.remoteIP.."|grep -e Address|cut -f4 -d\" \""
+local host=io.popen(h)
+local s = trim(assert(host:read('*a')))
+print("<tr class=\"table.cbi-section-table cbi-rowstyle-"..ii.."\">")
+print("<td ><a href=\"http://"..v.remoteIP..":8080/cgi-bin/status\"><b>"..v.remoteIP.."</b></a></td>")
+print("<td>"..s.."</td><td>&nbsp;"..dist.."</td><td>"..v.linkQuality.."</td><td>"..v.neighborLinkQuality.."</td><td style=\"background-color:"..colorE.."\">"..v.linkCost.."</td></tr>")
+ii=((ii%2)+1)
+end
+print("</table></fieldset>")?>
+<fieldset style="margin-left:22px;margin-right:22px;"><legend><b><font color="brown">&nbsp;Active nodes&nbsp;</font></b></legend><br><?
+local ii=1
+local data={}
+local test=""
+local f=io.popen("echo /routes | nc 127.0.0.1 9090")
+io.write("<table class=\"cbi-section-table\"><thead style=\"background-color: #cccc99;\">")
+io.write("<tr><th>Node</th><th>Metric </th><th>ETX</th></tr></thead>")
+for line in f:lines() do
+test=test..line
+end
+local data=json.decode(test)
+for k,v in pairs(data.routes) do
+for k,i in pairs(v) do
+end
+if v.genmask==32 then
+v.rtpMetricCost=tonumber(v.rtpMetricCost)/1024 or 0
+if v.rtpMetricCost==4096 then
+ v.rtpMetricCost=0
+end
+colorE=etx_color(v.rtpMetricCost)
+v.rtpMetricCost=string.format("%.3f",v.rtpMetricCost)
+v.destination=trim(v.destination)
+local hd="nslookup "..v.destination.."|grep -e "..v.destination.."|grep -e Address|cut -f4 -d\" \"|cut -f1 -d."
+local hostd=io.popen(hd)
+local dh = string.upper(trim(assert(hostd:read('*a')))) 
+print("<tr class=\"table.cbi-section-table cbi-rowstyle-"..ii.."\">")
+print("<td><a href=\"http://"..v.destination..":8080/cgi-bin/status\"><b>"..dh.."</a></b> [<a style=\"text-decoration: none\" href=\"http://"..v.destination..":8080/cgi-bin/status\">"..v.destination.."</a>]&nbsp;</td>")
+print("<td><center>"..v.metric.."</center></td><td style=\"background-color:"..colorE.."\">"..v.rtpMetricCost.."&nbsp;</td></tr>")
+ii=((ii%2)+1)
+end
+end
+print("</table></fieldset>")
+print("</pre><fieldset style=\"margin-left:22px;margin-right:22px;\"><pre><legend><b><font color=\"brown\">Legend</font></b></legend></pre><table><tr><td><font size=1><ul>")
+print("<li><strong>LQ: </strong>Success rate of packages received from the neighbor</li>")         
+print("<li><strong>NLQ: </strong>Success rate of packages sent to the neighbor</li>")     
+print("<li><strong>ETX: </strong>Expected retransmission count</li>")                               
+print("<li style=\"list-style: none\">")                                                                                       
+print("<ul><li><strong><span style=\"color:#00cc00\">Green</span></strong>: Very good (ETX < 2)</li>")    
+print("<li><strong><span style=\"color:#ffcb05\">Yellow</span></strong>: Good (2 < ETX < 4)></li>")   
+print("<li><strong><span style=\"color:#ff6600\">Orange</span></strong>: Still usable (4 < ETX < 10)")
+print("<li><strong><span style=\"color:#bb3333\">Red</span></strong>: Bad (ETX > 10)</li></ul></ul></td>")
+print("</tr></table></fieldset>") 
+end
+?>
+<br><center><img src=/images/logo-hamnetPL.png alt="" title="HamNET PL">
+</div></div></div></div></div>
+<center>
+<div style="background-color: #d8d8d8; position: static; left: 15px; width: 950px; height:1000px;z-index: 3;"></div>
+</html>
+</body>

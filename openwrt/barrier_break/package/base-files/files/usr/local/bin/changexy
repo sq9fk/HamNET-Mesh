@@ -1,0 +1,23 @@
+#!/bin/sh
+if  [ "$2" = "" ]; then {
+echo "                 "                                                      
+echo " Please use command: changexy lat lon"
+echo " lat - szerokosc geograficzna, lon - dlugosc geograficzna"      
+echo " example: chnagexy 53.2345 18.2345"              
+echo "                 "  
+} 
+else 
+{
+lat=`cat /etc/config/olsrd |grep -e "option lat "|cut -f3 -d" "`  
+sed -ie "s/option lat $lat/option lat '$1'/" /etc/config/olsrd
+lon=`cat /etc/config/olsrd |grep -e "option lon "|cut -f3 -d" "`
+sed -ie "s/option lon $lon/option lon '$2'/" /etc/config/olsrd
+sed -ie "s/mylocator=`cat /etc/config/setup|grep -e mylocator|cut -f2 -d=`/mylocator=`latlon2grid $1 $2`/" /etc/config/setup
+echo "================================================================="
+echo "Coordinates update in olsrd "
+echo "lat: $1 and lon $2 and QRA-Locator:`cat /etc/config/setup|grep -e mylocator|cut -f2 -d=` "         
+echo "================================================================="
+echo ""                   
+/etc/init.d/olsrd restart >/dev/null 2>&1
+}
+fi

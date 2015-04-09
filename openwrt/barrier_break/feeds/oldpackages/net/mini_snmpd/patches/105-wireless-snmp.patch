@@ -1,0 +1,223 @@
+--- a/globals.c
++++ b/globals.c
+@@ -47,6 +47,10 @@
+ int g_disk_list_length = 0;
+ char *g_interface_list[MAX_NR_INTERFACES];
+ int g_interface_list_length = 0;
++#ifdef __WIRELESS__
++char *g_wireless_list[MAX_NR_INTERFACES];
++int g_wireless_list_length = 0;
++#endif
+ client_t g_udp_client = { 0, };
+ client_t *g_tcp_client_list[MAX_NR_CLIENTS];
+ int g_tcp_client_list_length = 0;
+--- a/Makefile
++++ b/Makefile
+@@ -34,7 +34,7 @@
+ VENDOR	= .1.3.6.1.4.1
+ OFLAGS	= -O2
+ CFLAGS	= -Wall -Werror -DVERSION="\"$(VERSION)\"" -DVENDOR="\"$(VENDOR)\"" \
+-	  $(OFLAGS) -D__TRAPS__ -D__LINUX__
++	  $(OFLAGS) -D__TRAPS__ -D__LINUX__ -D__WIRELESS__
+ LDFLAGS	= $(OFLAGS)
+ TARGET	= mini_snmpd
+ MAN 	= mini_snmpd.8
+--- a/mib.c
++++ b/mib.c
+@@ -46,6 +46,9 @@
+ static const oid_t m_if_1_oid		= { { 1, 3, 6, 1, 2, 1, 2			}, 7, 8  };
+ static const oid_t m_if_2_oid		= { { 1, 3, 6, 1, 2, 1, 2, 2, 1		}, 9, 10 };
+ static const oid_t m_host_oid		= { { 1, 3, 6, 1, 2, 1, 25, 1		}, 8, 9  };
++#ifdef __WIRELESS__
++static const oid_t m_wireless_oid	= { { 1, 3, 6, 1, 4, 1, 762, 2, 5, 2, 1	}, 11, 13 };
++#endif
+ static const oid_t m_memory_oid		= { { 1, 3, 6, 1, 4, 1, 2021, 4,	}, 8, 10 };
+ static const oid_t m_disk_oid		= { { 1, 3, 6, 1, 4, 1, 2021, 9, 1	}, 9, 11 };
+ static const oid_t m_load_oid		= { { 1, 3, 6, 1, 4, 1, 2021, 10, 1	}, 9, 11 };
+@@ -527,6 +530,25 @@
+ 		return -1;
+ 	}
+ 
++#ifdef __WIRELESS__
++	if (g_wireless_list_length > 0) {
++		for (i = 0; i < g_wireless_list_length; i++) {
++			if (mib_build_entry(&m_wireless_oid, 1, i + 1, BER_TYPE_INTEGER, (const void *)(i + 1)) == -1) {
++				return -1;
++			}
++		}
++		for (i = 0; i < g_wireless_list_length; i++) {
++			if (mib_build_entry(&m_wireless_oid, 3, i + 1, BER_TYPE_OCTET_STRING, g_wireless_list[i]) == -1) {
++				return -1;
++			}
++		}
++		if (mib_build_entries(&m_wireless_oid, 7, 1, g_wireless_list_length, BER_TYPE_INTEGER, (const void *)0) == -1
++			|| mib_build_entries(&m_wireless_oid, 8, 1, g_wireless_list_length, BER_TYPE_INTEGER, (const void *)0) == -1) {
++			return -1;
++		}
++	}
++#endif
++
+ 	/* The memory MIB: total/free memory (UCD-SNMP-MIB.txt)
+ 	 * Caution: on changes, adapt the corresponding mib_update() section too!
+ 	 */
+@@ -621,6 +643,9 @@
+ 		meminfo_t meminfo;
+ 		cpuinfo_t cpuinfo;
+ 		netinfo_t netinfo;
++#ifdef __WIRELESS__
++		wirelessinfo_t wirelessinfo;
++#endif
+ #ifdef __DEMO__
+ 		demoinfo_t demoinfo;
+ #endif
+@@ -700,6 +725,24 @@
+ 		return -1;
+ 	}
+ 
++#ifdef __WIRELESS__
++	if (full) {
++		if (g_wireless_list_length > 0) {
++			get_wirelessinfo(&u.wirelessinfo);
++			for (i = 0; i < g_wireless_list_length; i++) {
++				if (mib_update_entry(&m_wireless_oid, 7, i + 1, &pos, BER_TYPE_INTEGER, (const void *)u.wirelessinfo.noise[i]) == -1) {
++					return -1;
++				}
++			}
++			for (i = 0; i < g_wireless_list_length; i++) {
++				if (mib_update_entry(&m_wireless_oid, 8, i + 1, &pos, BER_TYPE_INTEGER, (const void *)u.wirelessinfo.signal[i]) == -1) {
++					return -1;
++				}
++			}
++		}
++	}
++#endif
++
+ 	/* The memory MIB: total/free memory (UCD-SNMP-MIB.txt)
+ 	 * Caution: on changes, adapt the corresponding mib_build() section too!
+ 	 */
+--- a/mini_snmpd.c
++++ b/mini_snmpd.c
+@@ -29,6 +29,7 @@
+ #include <string.h>
+ #include <stdlib.h>
+ #include <stdio.h>
++#include <ctype.h>
+ #include <errno.h>
+ #include <time.h>
+ 
+@@ -431,6 +432,33 @@
+ 		}
+ 	}
+ 
++#ifdef __WIRELESS__
++	char buffer[BUFSIZ];
++	char *ptr;
++	int len;
++
++	if (read_file("/proc/net/wireless", buffer, sizeof (buffer)) != -1) {
++		ptr = buffer;
++		while (g_wireless_list_length < MAX_NR_INTERFACES) {
++			while (isspace(*ptr)) {
++				ptr++;
++			}
++			len = strcspn(ptr, "\n:");
++			if (ptr[len] == '\n') {
++				ptr += len;
++			} else if (ptr[len] == ':') {
++				g_wireless_list[g_wireless_list_length++] = strndup(ptr, len);
++				ptr = strchr(ptr + len, '\n');
++				if (ptr == NULL) {
++					break;
++				}
++			} else {
++				break;
++			}
++		}
++	}
++#endif
++
+ 	/* Print a starting message (so the user knows the args were ok) */
+ 	if (g_bind_to_device[0] != '\0') {
+ 		lprintf(LOG_INFO, "started, listening on port %d/udp and %d/tcp on interface %s\n",
+--- a/mini_snmpd.h
++++ b/mini_snmpd.h
+@@ -240,6 +240,13 @@
+ 	unsigned int tx_drops[MAX_NR_INTERFACES];
+ } netinfo_t;
+ 
++#ifdef __WIRELESS__
++typedef struct wirelessinfo_s {
++	unsigned int signal[MAX_NR_INTERFACES];
++	unsigned int noise[MAX_NR_INTERFACES];
++} wirelessinfo_t;
++#endif
++
+ #ifdef __DEMO__
+ typedef struct demoinfo_s {
+ 	unsigned int random_value_1;
+@@ -274,6 +281,10 @@
+ extern int g_disk_list_length;
+ extern char *g_interface_list[MAX_NR_INTERFACES];
+ extern int g_interface_list_length;
++#ifdef __WIRELESS__
++extern char *g_wireless_list[MAX_NR_INTERFACES];
++extern int g_wireless_list_length;
++#endif
+ extern client_t g_udp_client;
+ extern client_t *g_tcp_client_list[MAX_NR_CLIENTS];
+ extern int g_tcp_client_list_length;
+@@ -309,6 +320,9 @@
+ void get_cpuinfo(cpuinfo_t *cpuinfo);
+ void get_diskinfo(diskinfo_t *diskinfo);
+ void get_netinfo(netinfo_t *netinfo);
++#ifdef __WIRELESS__
++void get_wirelessinfo(wirelessinfo_t *wirelessinfo);
++#endif
+ #ifdef __DEMO__
+ void get_demoinfo(demoinfo_t *demoinfo);
+ #endif
+--- a/utils.c
++++ b/utils.c
+@@ -266,6 +266,42 @@
+ 	return (pos != -1) ? g_tcp_client_list[i] : NULL;
+ }
+ 
++#ifdef __WIRELESS__
++void get_wirelessinfo(wirelessinfo_t *wirelessinfo)
++{
++	char buffer[BUFSIZ];
++	char name[16];
++	char *ptr;
++	int i;
++
++	if (read_file("/proc/net/wireless", buffer, sizeof (buffer)) == -1) {
++		buffer[0] = '\0';
++	}
++	for (i = 0; i < g_wireless_list_length; i++) {
++		if (buffer[0] != '\0') {
++			snprintf(name, sizeof (name), "%s:", g_wireless_list[i]);
++			ptr = strstr(buffer, name);
++			if (ptr != NULL) {
++				ptr += strlen(name);
++				strtoul(ptr, &ptr, 0); /* Status */
++
++				/* When the Quality values have been updated
++				 * since the last read of the entry, a dot will
++				 * follow that value
++				 */
++				strtoul(ptr, &ptr, 0); /* Quality */
++				wirelessinfo->signal[i] = strtoul(ptr + 1, &ptr, 0); /* Signal */
++				wirelessinfo->noise[i] = strtoul(ptr + 1, &ptr, 0); /* Noise */
++			} else {
++				wirelessinfo->signal[i] = wirelessinfo->noise[i] = 0;
++			}
++		} else {
++			wirelessinfo->signal[i] = wirelessinfo->noise[i] = 0;
++		}
++	}
++}
++#endif
++
+ #ifdef __DEMO__
+ void get_demoinfo(demoinfo_t *demoinfo)
+ {

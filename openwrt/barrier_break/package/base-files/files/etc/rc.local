@@ -1,0 +1,13 @@
+# Put your custom commands here that should be executed once
+# the system init finished. By default this file does nothing.
+
+/usr/sbin/httpd -p8080 -h /www
+
+# disable Adaptive Noise Immunity 
+#echo 0 >/sys/kernel/debug/ieee80211/phy0/ath9k/ani 
+
+# enable Adaptive Noise Immunity 
+echo 1 >/sys/kernel/debug/ieee80211/phy0/ath9k/ani 
+(sleep 10; wifi start) &
+
+exit 0
