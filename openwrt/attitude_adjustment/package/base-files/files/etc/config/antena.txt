@@ -1,3 +1,0 @@
-'option antenna' dla NS2:
-
-  '1' -  EXTERNAL,  '2' -  VERTICAL, '3' - HORIZONTAL

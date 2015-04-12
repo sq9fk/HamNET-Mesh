@@ -1,0 +1,45 @@
+'option antenna'  - dotyczy  NS2  i WA5210G:
+
+  '1' -  EXTERNAL,  '2' -  VERTICAL, '3' - HORIZONTAL
+
+
+-----------------------------------------------------
+Zmiana w  pliku system  - dotyczy NS2
+ 
+    po lini  "  option max '30'   " wykonac taki zapis
+
+config led
+	option default '0'
+	option name 'wlan'
+	option sysfs 'gpio4'
+	option trigger 'phy0tx'
+
+config led
+	option default '0'
+	option name 'wlan'
+	option sysfs 'gpio1'
+	option trigger 'phy0rx'
+
+
+
+------------------------------------------------------
+Zmiana w  pliku system - dotyczy  WA5210G
+ 
+    po lini  "  option max '30'   " wykonac taki zapis
+
+
+config led
+	option default '0'
+	option name 'wlan'
+	option sysfs 'gpio4'
+	option trigger 'phy0tx'
+
+config led
+	option default '0'
+	option name 'wlan'
+	option sysfs 'gpio2'
+	option trigger 'phy0rx'
+
+
+
+ 

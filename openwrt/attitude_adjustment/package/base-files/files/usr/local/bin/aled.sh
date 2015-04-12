@@ -4,10 +4,10 @@
 #
 #wifi
 #sleep 4 
-inter=`iwinfo | grep "ESSID:" | cut -d " " -f1`
+inter=`iwinfo | grep "ESSID:" | cut -d " " -f1 | head -n1`
 # odczyt Hardware
-HardN=`iwinfo | grep " 0777:C002" | cut -d " " -f13`
-HardM=`iwinfo | grep " 0777:" | cut -d " " -f13 | cut -d ":" -f1`
+HardN=`iwinfo | grep " 0777:C002" | cut -d " " -f13 | head -n1`
+HardM=`iwinfo | grep " 0777:" | cut -d " " -f13 | cut -d ":" -f1 | head -n1`
 N=0
 M=0
 h=0  
@@ -43,7 +43,7 @@ sleep 3
 #
 clear
 echo -e "\n--------------------------------------------------------------"
-echo " Wskaznik sygnalu do ustawienia kierunku anteny V1.08  SP9FUT"
+echo " Wskaznik sygnalu do ustawienia kierunku anteny V1.09  SP9FUT"
 echo "      STACJE POLACZONE BEZPOSREDNIO W SIECI HamNet "
 echo " `iwinfo $inter assoclist | grep "SNR"`"
 echo "--------------------------------------------------------------"
@@ -52,10 +52,10 @@ echo "--------------------------------------------------------------"
          then   
     if  [ $HardN = "0777:C002" ]
          then
-echo -e "\t\t NanoStation2"
-l1="/sys/class/leds/gpio1/trigger"
-l2="/sys/class/leds/gpio1/delay_off"
-l3="/sys/class/leds/gpio1/delay_on"
+echo -e "\t NanoStation2  sygnalizacja dioda LED"
+l1="/sys/class/leds/gpio3/trigger"
+l2="/sys/class/leds/gpio3/delay_off"
+l3="/sys/class/leds/gpio3/delay_on"
 (echo "none" > $l1)
 #
 while [ $P -le $R ] ; do
@@ -111,7 +111,7 @@ done
        then
       if  [ $HardM = "0777" -a $N = 1 ]
          then
-echo -e "\t\t UBIQUITI"
+echo -e "\t UBIQUITI  sygnalizacja dioda LED"
 
 l4="/sys/class/leds/ubnt:orange:link2/trigger"
 l5="/sys/class/leds/ubnt:orange:link2/delay_off"
@@ -173,7 +173,7 @@ done
 sleep 3
 clear
 echo -e "\n--------------------------------------------------------------"
-echo " Wskaznik sygnalu do ustawienia kierunku anteny V1.08  SP9FUT"
+echo " Wskaznik sygnalu do ustawienia kierunku anteny V1.09  SP9FUT"
 echo "       STACJE POLACZONE BEZPOSREDNIO W SIECI HamNet "
 echo " `iwinfo $inter assoclist | grep "SNR"`"
 echo "--------------------------------------------------------------"
