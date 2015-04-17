@@ -1,0 +1,48 @@
+#!/usr/bin/lua
+-- Simple APRS Becaon send object to aprs server by SP2ONG
+socket= require("socket")
+socket.TIMEOUT=5
+tcp =assert(socket.tcp())
+tcp:settimeout(5)
+
+
+-- APRS Server IP
+host="44.xx.xx.xx"
+port="14580"
+
+-- Your callsign
+call="NOCALL"
+--- Your passcode
+passcode="xxxxxx"
+
+-- Lat corrdinates
+lat="5312.12N"
+-- Lon corridnates
+lon="01812.11E"
+
+--
+comment="HamNET Node 2362 MHz BW=5 MHz"
+
+
+-- Symbol for WLNA HamNET Node
+symbol="88"
+
+-- becaon 
+bikon=call..">APRS,TCPIP*:;"..call.."   *111111z"..lat.."8"..lon.."8"..comment.."\r\n"
+
+-- login to APRS Server
+login="user "..call.." pass "..passcode.." v1.0 HamNET-Mesh\r\n"
+
+-- open connect
+tcp:connect(host, port);
+--- send login
+local ok, err = tcp:send(login);
+if ok ~=nil then
+-- send beacon
+local ok, err = tcp:send(bikon);
+tcp:close()
+os.execute("logger -t 'APRS beacon' 'APRS Server - OK'")
+else
+msg="logger -t 'APRS beacon' 'APRS Server - "..err.."' "
+os.execute(msg)
+end

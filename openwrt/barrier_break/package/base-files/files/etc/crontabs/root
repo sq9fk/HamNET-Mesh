@@ -1,4 +1,5 @@
+#*/30 * * * * /etc/config/aprsbeacon
 */30 * * * * /usr/local/bin/beacon
-0,30 * * * * cat /var/run/latlon.js >/www/latlon.js
+0,30 * * * * cat /var/run/latlon.js >/tmp/latlon.js
 */5 * * * * /usr/local/bin/olsrd_watchdog
 */5 * * * * killall -HUP dnsmasq
