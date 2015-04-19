@@ -79,8 +79,8 @@ io.write("<td> Lon: "..lon.."</td>")
 <tr style="background-color: #f1f6fa;color:#000099;">
 <td colspan=2><? 
 local f=io.popen("iwinfo mesh0 info |grep -e Hardware|cut -f2 -d[")
-model=stripchars(trim(f:read("*a")),"]")
-if model=="Generic MAC80211" then
+model=stripchars(trim(f:read("*a")),']')
+if model=="Generic MAC80211" or model=="Generic WEXT" then
 local f=io.popen("cat /var/sysinfo/model")
 model=trim(f:read("*a"))
 end
